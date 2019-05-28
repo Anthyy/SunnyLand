@@ -11,6 +11,7 @@ public class Player : MonoBehaviour
     public float gravity = -10f;
 
     private CharacterController2D controller;
+    private Animator anim;
 
     // Start is called before the first frame update
     void Start()
@@ -23,7 +24,22 @@ public class Player : MonoBehaviour
     {
         float inputH = Input.GetAxis("Horizontal");
         float inputV = Input.GetAxis("Vertical");
+        Run(inputH);
+        Climb(inputV);
+    }
 
-        controller.move(transform.right * inputH * Time.deltaTime);
+    void Run(float inputH)
+    {
+        controller.move(transform.right * inputH * moveSpeed * Time.deltaTime);
+        bool isRunning = inputH != 0; // Detect movement (since 1 and -1 are movement, so if it's NOT 0, it's one of them)
+        anim.SetBool("isRunning", inputH != 0);
+
+        // Sneak Peak:
+        // rend.flipX = inputH > 0
+    }
+
+    void Climb(float inputV)
+    {
+
     }
 }
