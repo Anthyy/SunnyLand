@@ -77,7 +77,22 @@ public class Player : MonoBehaviour
         if (isRunning)
         {
             // Flip character depending on left/right input
-            rend.flipX = inputH < 0;
+
+            // rend.flipX (false) = Right
+            // rend.flipX (true) = Left
+
+            // inputH (-1) < 0 = True
+            // inputH (+1) < 0 = False
+
+            if (inputH < 0) 
+            {
+                rend.flipX = true;
+            }
+
+            if(inputH > 0)
+            {
+                rend.flipX = false;
+            }
         }
     }
 
