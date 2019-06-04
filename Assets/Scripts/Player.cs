@@ -41,25 +41,32 @@ public class Player : MonoBehaviour
         float inputV = Input.GetAxis("Vertical"); // Getting up & down (vertical) input
 
         
-        if (!controller.isGrounded) // If controller is NOT grounded
+        if (!controller.isGrounded // If controller is NOT grounded...
+            && !isClimbing) // AND is NOT climbing...
         {
             velocity.y += gravity * Time.deltaTime; // Apply delta to gravity
         }
-
-        bool isJumping = Input.GetButtonDown("Jump"); // Get Spacebar input 
-
-        if (isJumping) // If jump is pressed...
+        else
         {
-            Jump(); // Make the controller jump
-        }
+            bool isJumping = Input.GetButtonDown("Jump"); // Get Spacebar input 
 
-        anim.SetBool("IsGrounded", controller.isGrounded);
+            if (isJumping) // If jump is pressed...
+            {
+                Jump(); // Make the controller jump
+            }
+        }
+        
+        anim.SetBool("IsGrounded", controller.isGrounded); // Setting IsGrounded animation to 
         anim.SetFloat("JumpY", velocity.y);
 
         Move(inputH);
-        Climb(inputV);
+        Climb(inputH, inputV);
 
-        controller.move(velocity * Time.deltaTime); // Applies velocity to controller (to get it to move)
+        // If the character isn't climbing
+        if (!isClimbing)
+        {
+            controller.move(velocity * Time.deltaTime); // Applies velocity to controller (to get it to move)
+        }        
     }
 
     void Move(float inputH)
@@ -67,41 +74,29 @@ public class Player : MonoBehaviour
         // Move the character controller left/right with input
         velocity.x = inputH * moveSpeed;
 
-        // Set bool to true if input is pressed
-        bool isRunning = inputH != 0;
+        // Set bool to true if left or right input is pressed
+        bool isRunning = inputH != 0; // isRunning is either left (-1) or right (+1)
 
         // Animate the player to running if input is pressed
         anim.SetBool("IsRunning", isRunning);
 
-        // Check if input is pressed
-        if (isRunning)
+        if (inputH < 0) // If left is pressed...
         {
-            // Flip character depending on left/right input
+            rend.flipX = true; // Flip the sprite. Without this, the sprite would just move left but still face the right.
+        }
 
-            // rend.flipX (false) = Right
-            // rend.flipX (true) = Left
-
-            // inputH (-1) < 0 = True
-            // inputH (+1) < 0 = False
-
-            if (inputH < 0) 
-            {
-                rend.flipX = true;
-            }
-
-            if(inputH > 0)
-            {
-                rend.flipX = false;
-            }
+        if (inputH > 0) // If right is pressed...
+        {
+            rend.flipX = false; // Untick flipX, flipping the character back to facing right (its default).
         }
     }
 
-    void Climb(float inputV)
+    void Climb(float inputH, float inputV)
     {
         bool isOverLadder = false; // Is overlapping ladder       
 
         // Get a list of all hit objects overlapping point
-        Collider2D[] hits = Physics2D.OverlapPointAll(transform.position);
+        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, centreRadius);
         // Loop through each point
         foreach (var hit in hits)
         {
@@ -114,14 +109,37 @@ public class Player : MonoBehaviour
             }
         }
 
-        // If is over climbable and input V has been made
-        //  Is Climbing
+        // If is over climbable and input V (up and down) has been made
+        if(isOverLadder && inputV != 0)
+        {
+            // Is Climbing
+            isClimbing = true;
+            velocity.y = 0; // Cancel Y velocity
+        }
+
+        // If NOT over ladder
+        if (!isOverLadder)
+        {
+            // Not climbing anymore
+            isClimbing = false;
+        }
+
         // If is climbing
-        //  Perform logic for climbing
+        if (isClimbing)
+        {
+            // Translate character up and down
+            Vector3 inputDir = new Vector3(inputH, inputV);
+            transform.Translate(inputDir * moveSpeed * Time.deltaTime);
+        }
+
+        anim.SetBool("IsClimbing", isClimbing); // Setting IsClimbing animation to isClimbing bool
+        anim.SetFloat("ClimbSpeed", inputV); // Setting ClimbSpeed animation to up and down input
     }
 
     void Jump()
     {
         velocity.y = jumpHeight; // Set velocity's Y to height
+
+        anim.SetTrigger("Jump");
     }
 }
